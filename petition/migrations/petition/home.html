@@ -1,0 +1,30 @@
+{% extends 'map/base.html' %}
+{% block content %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'blog/home.css' %}">
+		<div class="row">
+			<div class="col-md-3"></div>
+			<div class="col-md-6">
+				<div class="feed card shadow-lg p-3 mb-5 bg-white rounded">
+		<a href="{% url 'petition-create' %}"><h3 class=""><i class="fa fa-pen"></i>Add a petition</h3></a>
+		
+		{% for post in petition %}
+			<div class="container card mt-2 mb-3">
+				<a href="{% url 'petition-detail' petition.id %}" ><h3 class="text-center" style="color:gray">{{ post.title }}</h3></a>
+				<p class="text-center">{{post.date_posted|date:"F d, Y"}}</p>
+			<p class="text-center">{{ post.description }}</p>
+			<a href="{% url 'petition-detail' petition.id %}" ><img src="{{ post.img.url }}" alt="{{ post.img.url }}" style="max-width:600px;align-items:center;margin-bottom: 4px" class="image mx-auto d-block"></a>
+			<!-- <a href="{% url 'post-update' post.id %}" class="btn btn-secondary btn-sm">Update</a>
+   			<a href="{% url 'post-delete' post.id %}" class="btn-sm btn-danger btn-sm">Delete</a> -->
+			</div>
+			
+		{% endfor %}
+	
+	</div>
+			</div>
+			<div class="col-md-3"></div>
+		</div>
+
+		
+	
+{% endblock content %}

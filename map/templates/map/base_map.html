@@ -1,0 +1,425 @@
+{% extends "map/base.html" %}
+{% block content %}
+{% load leaflet_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://rawgit.com/bassjobsen/typeahead.js-bootstrap-css/master/typeaheadjs.css" />
+<script
+  src="https://rawgit.com/corejavascript/typeahead.js/master/dist/typeahead.bundle.js"></script>
+<script src="https://rawgit.com/komoot/typeahead-address-photon/master/src/typeahead-address-photon.js"></script>
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" type="text/css" href="{% static 'map/index.css' %}">
+ <link rel="stylesheet" type="text/css" href="{% static 'map/leaflet-search.css' %}">
+<script type="text/javascript" src="{% static 'map/leaflet-search.js' %}" > </script>
+
+<script src="http://cdn-geoweb.s3.amazonaws.com/esri-leaflet/1.0.0-rc.2/esri-leaflet-basemaps.js"></script>
+
+<!-- for gps trace -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+<!-- for gps trace -->
+
+
+<!-- <script src="dist/jquery.js"></script>
+ --> 
+<!--  <script src="{% static 'map/typeahead.bundle.js' %}"></script>
+
+ <script type="text/javascript" src="{% static 'map/typeahead-address-photon.js' %}"></script> -->
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="datashow container card" style="margin-left:15px;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);border-color:#fff;border-width:2px;max-width: 90%;
+        ">
+            <h2 class="text-center" style="display:inline;">Route details <i class="fas fa-route"></i></h2>
+            <div class="card">
+                <div class="container colorcard0">
+                    <strong style="color: white">Route 1:-</strong>
+                    <p style="color: white"><strong >Distance:</strong><span class="show_distance0" >0</span>km</p>
+                    <p style="color: white"><strong >Time:</strong><span class="show_duration0" >0</span></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="container colorcard1">
+                    <strong style="color: white">Route 2:-</strong>
+                    <p style="color: white"><strong >Distance:</strong><span class="show_distance1" >0</span>km</p>
+                    <p style="color: white"><strong >Time:</strong><span class="show_duration1" >0</span></p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    
+
+    <div class="col-md-6">
+        <h2 class="text-center">Map around you</h2>
+        <div id="map" class="container card" >
+        {% leaflet_map "mymap" callback="main_map_init" %}
+        <script type="text/javascript">
+            var distances=[]
+            var time=[]
+            var markers = L.featureGroup();
+
+            function main_map_init(map,options){
+                // form filled source and destination
+                 L.marker([{{ source_latitude }},{{ source_longitude }}]).addTo(map);
+                 L.marker([{{ destination_latitude }},{{ destination_longitude }}]).addTo(map);
+                 L.marker([{{post.location.latitude}},{{post.location.longitude}}])
+                 L.Routing.control({
+                     waypoints: [
+                         L.latLng({{source_latitude}},{{source_longitude}}),
+                         L.latLng({{destination_latitude}},{{destination_longitude}})
+                     ],
+                    // geocoder: L.Control.Geocoder.nominatim()
+
+                 }).addTo(map);
+                // form filled source and destination
+                
+                //gps show location
+                lc=L.control.locate();
+                lc.addTo(map);
+                // function onLocationFound(e){
+                //     var radius=e.accuracy/2;
+                //     L.marker(e.latlng).addTo(map).bindPopup("you are within"+radius+"meters from this point").openPopup();
+                //     L.circle(e.latlng,radius).addTo(map);
+                // }
+
+                // function onLocationError(e){
+                //     alert(e.message);
+                // }
+
+                // map.on('locationfound',onLocationFound);
+                // map.on('locationerror',onLocationError);
+                
+                 
+                var controlsearch = new L.Control.Search({
+                    url: 'https://nominatim.openstreetmap.org/search?format=json&q={s}',
+                    jsonpParam: 'json_callback',
+                    propertyName: 'display_name',
+                    propertyLoc: ['lat','lon'],
+                    marker: L.circleMarker([0,0],{radius:30}),
+                    autoCollapse: true,
+                    autoType: false,
+                    minLength: 2
+                }).on('search:locationfound',function(data){
+                    console.log(data)
+                    // console.log(data)
+                    // console.log(data.latlng)
+                })
+                .addTo(map)
+
+
+
+                
+                    function showPredictions(event, predictions) {
+                    map.removeLayer(markers);
+                    markers = L.featureGroup();
+                    markers.addTo(map);
+
+                    predictions.forEach(function (prediction) {
+                      L.marker([ prediction.geometry.coordinates[1],
+                                 prediction.geometry.coordinates[0] ]).addTo(markers);
+                      map.fitBounds(markers.getBounds());
+                    });
+                  }
+
+                  var engine = new PhotonAddressEngine({
+                        url: 'https://photon.komoot.de',
+                        lang: 'fr',
+                        lat: 27.6828464,
+                        lon: 85.3178166,
+                        onPredictions: showPredictions
+                      });
+
+                 
+
+                  function showSelected(event, selected) {
+                        $('#id_source').val(selected.description);
+
+                        map.removeLayer(markers);
+                        markers = L.featureGroup();
+                        markers.addTo(map);
+
+                        L.marker([
+                          selected.geometry.coordinates[1],
+                          selected.geometry.coordinates[0]
+                        ], {
+                          draggable: true
+                        }).on('dragend', function (event) {
+                          var pos = event.target.getLatLng();
+                          engine.reverseGeocode([ pos.lat, pos.lng ]);
+                        }).addTo(markers);
+                        map.fitBounds(markers.getBounds());
+                      }
+
+                       $('#id_source').typeahead({
+                        hint: true,
+                        highlight: true,
+                        minLength: 3
+                      }, {
+                        source: engine.ttAdapter(),
+                        displayKey: 'description'
+                      });
+
+                       engine.bindDefaultTypeaheadEvent($('#id_source'));
+                      $(engine).bind('addresspicker:predictions', showPredictions);
+                      $(engine).bind('addresspicker:selected', showSelected); 
+               
+
+                        function showPredictions2(event, predictions) {
+                    map.removeLayer(markers);
+                    markers = L.featureGroup();
+                    markers.addTo(map);
+
+                    predictions.forEach(function (prediction) {
+                      L.marker([ prediction.geometry.coordinates[1],
+                                 prediction.geometry.coordinates[0] ]).addTo(markers);
+                      map.fitBounds(markers.getBounds());
+                    });
+                  }
+
+                      
+
+                      var engine = new PhotonAddressEngine({
+                        url: 'https://photon.komoot.de',
+                        lang: 'fr',
+                        lat: 27.6828464,
+                        lon: 85.3178166,
+                        onPredictions: showPredictions2
+                      });
+
+                      function showSelected2(event, selected) {
+                        $('#id_destination').val(selected.description);
+
+                        map.removeLayer(markers);
+                        markers = L.featureGroup();
+                        markers.addTo(map);
+
+                        L.marker([
+                          selected.geometry.coordinates[1],
+                          selected.geometry.coordinates[0]
+                        ], {
+                          draggable: true
+                        }).on('dragend', function (event) {
+                          var pos = event.target.getLatLng();
+                          engine.reverseGeocode([ pos.lat, pos.lng ]);
+                        }).addTo(markers);
+                        map.fitBounds(markers.getBounds());
+                      }
+
+
+
+                     
+
+                      $('#id_destination').typeahead({
+                        hint: true,
+                        highlight: true,
+                        minLength: 3
+                      }, {
+                        source: engine.ttAdapter(),
+                        displayKey: 'description'
+                      });
+
+                      engine.bindDefaultTypeaheadEvent($('#id_destination'));
+                        $(engine).bind('addresspicker:predictions', showPredictions2);
+                      $(engine).bind('addresspicker:selected', showSelected2); 
+
+                 
+                 
+
+                  
+                      
+
+                      
+
+
+                var latlngs=[];//for polyline
+
+                // var url = 'https://api.mapbox.com/directions/v5/mapbox/driving/' +
+                //         '85.3178166,27.6828464;85.2789547,27.6931761'+
+                //         '?geometries=geojson&access_token=pk.eyJ1IjoicmFuamFuNDM1IiwiYSI6ImNrNWIzdnNqeTE2ZjgzZG82OG40aG82ejcifQ.nrFTVyOERu6YhgS66Gxr8A&alternatives=true';
+
+
+
+              var url = 'https://api.mapbox.com/directions/v5/mapbox/driving/' +'{{source_longitude}},{{source_latitude}};{{destination_longitude}},{{destination_latitude}}'+'?geometries=geojson&access_token=pk.eyJ1IjoicmFuamFuNDM1IiwiYSI6ImNrNWIzdnNqeTE2ZjgzZG82OG40aG82ejcifQ.nrFTVyOERu6YhgS66Gxr8A&alternatives=true';
+
+                var req = new XMLHttpRequest();    
+                req.responseType = 'json';    
+                req.open('GET', url, true);
+
+                req.onload = function () {
+                    var jsonResponse = req.response;
+                    var routes_num = jsonResponse.routes.length
+                    console.log(jsonResponse);
+                    
+                    for(var j=0; j<routes_num;j++){
+                        latlngs[j]=[];
+                        var line_color='green';//for red line
+                        var desired=0;
+
+                        for(var i=0;i<jsonResponse.routes[j].geometry.coordinates.length;i++){
+                            latlngs[j][i]=[jsonResponse.routes[j].geometry.coordinates[i][1],jsonResponse.routes[j].geometry.coordinates[i][0]];
+
+                            if(JSON.stringify(jsonResponse.routes[j].geometry.coordinates[i])=='[85.314255,27.685522]' && ({{vehicle_num}}>4)){
+                                        line_color='red';
+                                        time[j]=((jsonResponse.routes[j].duration/60)+5);
+                                        console.log('jam @ checkpoint & added 5 minutes');
+                                        hour=parseInt(parseInt(time[j])/60);
+                                        time[j]=(time[j]-hour*60).toFixed(4);
+                                        desired=time[j]
+
+                            }
+
+                            // if({{vehicle_num}}>200){
+                            //     console.log('jamtantra');
+                            //     line_color='red';
+                            //     time[j]=((jsonResponse.routes[j].duration/60)+5);
+                            //     hour=parseInt(parseInt(time[j])/60);
+                            //     time[j]=(time[j]-hour*60).toFixed(4);
+                            // }
+                                
+                            else{
+                                time[j]=((jsonResponse.routes[j].duration/60));
+                                hour=parseInt(parseInt(time[j])/60);
+                                time[j]=(time[j]-hour*60).toFixed(4);
+                            }
+                            
+
+                            // console.log('Distance between ' +
+                            //     '{{ source_latitude }}' + ',' + '{{ source_longitude }}' + ' and ' +
+                            //     '{{ destination_latitude }}' + ',' + '{{ destination_longitude }}' +
+                            //     ' is ' + distance);
+                            if(desired != 0){
+                                time[j]=desired;
+                            }
+                            
+                        }
+
+                        distances[j] = (jsonResponse.routes[j].distance/1000).toFixed(4);
+                            var total_time=String(hour+"hr "+time[j]+"min");
+                            console.log(time[j]);
+                            // console.log(show_distance[j])
+                            var x=document.getElementsByClassName(`show_distance${j}`);
+                            var color=document.getElementsByClassName(`colorcard${j}`);
+                            color[0].style.backgroundColor=line_color
+                            var y=document.getElementsByClassName(`show_duration${j}`);
+                            // y[0].style.background-color={line_color};
+                            x[0].innerHTML=distances[j];
+
+                            y[0].innerHTML=total_time;
+
+                        console.log(line_color);
+                        L.polyline(latlngs[j],{color: line_color}).addTo(map);
+                    }
+
+                    
+                    
+                };
+
+                req.send();
+
+                //next method to show accident information from database
+                    var popup=L.popup()
+                    {% for post in posts %}
+                        // for formatting
+                        var location_json=JSON.parse('{{post.location.geojson}}'.replace(/&quot;/g,'"'));   
+
+                        //for custom red icon
+                        var myIcon = L.icon({
+                            iconUrl: '/media/info_red.png',
+                            iconSize: [38,50],
+                        });
+                    
+                        var map_marker = new L.GeoJSON(location_json,{
+                            pointToLayer: function (feature,latlng){
+                                return L.marker(latlng,{icon:myIcon});
+                            }
+                        });
+                        map_marker.addTo(map).on('click',function show(e){
+                            popup
+                                .setLatLng(e.latlng)
+                                .setContent('{{post.title}} @ <a href="{% url 'post-detail' post.id %}">{{post.city}}</a>')
+                                .openOn(map)
+                         });
+                    {% endfor %}
+                //code for showing accident information from database
+
+
+
+    }
+
+    
+            
+
+        </script>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+<!--             <p>Displacement:-{{ distances }}km</p>
+ -->            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+     </div>
+
+     
+        
+    
+    
+
+</div>
+
+    
+
+    <div class="col-md-3">
+        <div class="datashow container card" style="margin-right:15px;box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);border-color:#fff;border-width:2px;max-width: 90%;
+        ">
+            <h2 class="text-center" style="display:inline;">Your place's info <i class="fa fa-info-circle 2x"></i></h2>
+            <p>Recorded @ {{sensor_data.date_posted}} </p>
+            <div class="card">
+                <div class="container">
+                    <strong>Temperature:</strong>{{sensor_data.temperature}} &#8451;
+                </div>
+            </div>
+            <div class="card">
+                <div class="container">
+                    <strong>Humidity:</strong>{{sensor_data.humidity}} %
+                </div>
+            </div>
+            <div class="card">
+                <div class="container">
+                    <strong>Dust:</strong>{{sensor_data.dust}} mg/cc
+                </div>
+            </div>
+            <div class="card">
+                <div class="container">
+                    <strong>Weather:</strong>{{weather_data.weather.0.description}}
+                    <img src="http://openweathermap.org/img/wn/{{weather_data.weather.0.icon}}@2x.png"> 
+                </div>
+            </div>
+            <div class="card">
+                <div class="container">
+                    <strong>Wind speed:</strong> {{weather_data.wind.speed}} m/s<br>
+                    <strong>Wind degree:</strong> {{weather_data.wind.deg}} deg
+                </div>
+            </div>
+
+             <div class="card">
+                <div class="container">
+                    <strong>Visibility:</strong> {{weather_data.visibility}}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+</div>
+
+    
+{% endblock content %}

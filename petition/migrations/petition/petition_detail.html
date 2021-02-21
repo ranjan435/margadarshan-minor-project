@@ -1,0 +1,49 @@
+{% extends 'map/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <!-- <img class="rounded-circle" src="{{petition.author.profile.image.url}}"> -->
+    <h2>{{petition.title}}</h2>
+    <p>By {{petition.author}} on {{petition.date_petitioned|date:"F d, Y"}}</p>
+      
+      <div>
+        {% if user.is_authenticated or user.is_superuser %}
+          <a href="{% url 'petition-update' petition.id %}" class="btn btn-secondary btn-sm">Update</a>
+          <a href="{% url 'petition-delete' petition.id %}" class="btn btn-danger btn-sm">Delete</a>
+          </div>
+      {% endif %}
+    <p>{{ petition.description }}</p>
+
+    {% if petition.img %}
+      <a href="{{ petition.img.url }}">
+      <img src="{{ petition.img.url }}" alt="{{ petition.img.url }}"  style="width:600px;" class="mx-auto d-block">
+      </a>
+    {% endif %}
+
+    <p><strong>{{total_upvotes}}</strong> Validation{{ total_upvotes|pluralize }}</p>
+
+    {% if request.user.is_authenticated %}
+    <form action="{% url 'upvote_petition' %}" method="petition">
+      {% csrf_token %}
+      {% if is_upvoted %}
+
+      {% if request.user.profile.is_verified %}
+        <button type="submit" name="petition_id" value="{{ petition.id }}" class="btn btn-success btn-small">Validated</button>
+      {% else %}
+        <a class="btn btn-outline-success btn-small">Yet to be Validated</a>
+
+      {% endif %}
+
+      {% elif request.user.profile.is_verified %}
+      <button type="submit" name="petition_id" value="{{ petition.id }}" class="btn btn-success btn-small">Validate</button>
+      {% else %}
+      <a class="btn btn-outline-success btn-small">Yet to be Validated</a>
+      {% endif %}
+
+    </form>
+    {% endif %}
+    <hr width="50%" style="margin-left:0px;">
+    
+
+</div>
+{% endblock content %}

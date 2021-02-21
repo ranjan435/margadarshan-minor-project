@@ -1,0 +1,99 @@
+{% load crispy_forms_tags %}
+{% load leaflet_tags %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+	{% leaflet_js %}
+	{% leaflet_css %}
+	<title>Margadarshan</title>
+	<link rel="shortcut icon" type="image/png" href="{% static 'map/green1.png' %}"/>
+
+	<!-- Required meta tags -->
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	
+	<!-- Bootstrap CSS and js-->
+   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+   <!-- for fontawesome -->
+   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+	
+	<script type="text/javascript" src="{% static 'map/index.js' %}"></script>
+	<!-- leaflet routing machine -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+
+	{{form.media}}
+
+	<style>
+     html{
+       overflow-x: hidden;
+     }
+   </style>
+
+</head>
+<body >
+	<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" style="margin-bottom: 10px">
+	
+    	<a class="navbar-brand" href="{% url 'home' %}"><img src="{%static 'map/greenb.png' %}" alt="Margadarshan" style="width:230px"></a>
+		<ul class="navbar-nav mx-auto">
+			<li class="nav-item ">
+				<a class="nav-link" href="{% url 'home' %}"><i class="fa fa-fw fa-home"></i>Home</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="{% url 'blog-home' %}"><i class="fa fa-fw fa-info"></i>Traffic Updates</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="{% url 'post-create' %}"><i class="fa fa-fw fa-plus"></i>Add an update</a>
+			</li>
+			{% if user.is_authenticated %}
+			 <li class="nav-item">
+          	<a class="nav-link" href="{% url 'profile' %}"><i class="fa fa-fw fa-user"></i>Profile</a>
+       		 </li>
+			<li class="nav-item">
+				<a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i>Logout</a>
+			</li>
+			{% else %}
+			<li class="nav-item">
+				<a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i>Login</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="{% url 'register' %}"><i class="fas fa-user-plus"></i>Register</a>
+			</li>
+			{% endif %}
+		</ul>
+	
+	</nav>
+	<br><br><br><br>
+		<br><br>
+	
+	
+	<div>
+			{% block content %}
+			{% endblock %}
+			
+	</div>
+	
+<div>
+
+	<!-- <footer class="page-footer bg-light  col-sm-12" style="margin-top:0px;position:relative;bottom:0;">
+      <div class="footer-content">
+
+      <p class="text-center mt-2 mb-0">&copy; 2020 Copyright:<strong>Margadarshan</strong></p>
+      <p class="text-center mb-1" >Created By:Margadarshan Team</p>
+      </div>
+    </footer> -->
+  </div>
+	
+		
+	
+	
+</body>
+</html>

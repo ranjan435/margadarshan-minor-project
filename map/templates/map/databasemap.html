@@ -1,0 +1,46 @@
+{% load crispy_forms_tags %}
+{% load leaflet_tags %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+	{% leaflet_js %}
+	{% leaflet_css %}
+	<title>Margadarshan</title>
+	<link rel="stylesheet" type="text/css" href="{% static 'map/index.css' %}">
+	<script type="text/javascript" src="{% static 'map/index.js' %}"></script>
+	{{form.media}}
+
+	<div id="map">
+		{% leaflet_map "mymap" callback="main_map_init" %}
+		<script type="text/javascript">
+			function main_map_init(map,options){
+				 
+					var popup=L.popup()
+					{% for post in posts %}
+						// for formatting
+						var location_json=JSON.parse('{{post.location.geojson}}'.replace(/&quot;/g,'"'));	
+
+						//for custom red icon
+						var myIcon = L.icon({
+							iconUrl: '/media/info_red.png',
+							iconSize: [38,50],
+						});
+					
+						var map_marker = new L.GeoJSON(location_json,{
+							pointToLayer: function (feature,latlng){
+								return L.marker(latlng,{icon:myIcon});
+							}
+						});
+						map_marker.addTo(map).on('click',function show(e){
+						 	popup
+						 		.setLatLng(e.latlng)
+						 		.setContent('{{post.title}} @ <a href="{% url 'blog-home' %}">{{post.city}}</a>')
+						 		.openOn(map)
+						 });
+					{% endfor %}
+			}
+		</script>
+	</div>
+</body>
+</html>

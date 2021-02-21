@@ -1,0 +1,49 @@
+{% extends 'map/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <!-- <img class="rounded-circle" src="{{post.author.profile.image.url}}"> -->
+    <h2>{{post.title}}</h2>
+    <p>By {{post.author}} on {{post.date_posted|date:"F d, Y"}}</p>
+      
+      <div>
+        {% if user.is_authenticated or user.is_superuser %}
+          <a href="{% url 'post-update' post.id %}" class="btn btn-secondary btn-sm">Update</a>
+          <a href="{% url 'post-delete' post.id %}" class="btn btn-danger btn-sm">Delete</a>
+          </div>
+      {% endif %}
+    <p>{{ post.description }}</p>
+
+    {% if post.img %}
+      <a href="{{ post.img.url }}">
+      <img src="{{ post.img.url }}" alt="{{ post.img.url }}"  style="width:600px;" class="mx-auto d-block">
+      </a>
+    {% endif %}
+
+    <p><strong>{{total_upvotes}}</strong> Validation{{ total_upvotes|pluralize }}</p>
+
+    {% if request.user.is_authenticated %}
+    <form action="{% url 'upvote_post' %}" method="post">
+      {% csrf_token %}
+      {% if is_upvoted %}
+
+      {% if request.user.profile.is_verified %}
+        <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-success btn-small">Validated</button>
+      {% else %}
+        <a class="btn btn-outline-success btn-small">Yet to be Validated</a>
+
+      {% endif %}
+
+      {% elif request.user.profile.is_verified %}
+      <button type="submit" name="post_id" value="{{ post.id }}" class="btn btn-success btn-small">Validate</button>
+      {% else %}
+      <a class="btn btn-outline-success btn-small">Yet to be Validated</a>
+      {% endif %}
+
+    </form>
+    {% endif %}
+    <hr width="50%" style="margin-left:0px;">
+    
+
+</div>
+{% endblock content %}
